@@ -74,7 +74,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 /**
- * Tests for {@link TestContextAotGenerator}, {@link TestAotMappings},
+ * Tests for {@link TestContextAotGenerator}, {@link AotTestContextInitializers},
  * {@link AotTestAttributes}, {@link AotContextLoader}, and run-time hints.
  *
  * @author Sam Brannen
@@ -114,6 +114,7 @@ class TestContextAotGeneratorTests extends AbstractAotTests {
 			try {
 				System.setProperty(AotDetector.AOT_ENABLED, "true");
 				AotTestAttributesFactory.reset();
+				AotTestContextInitializersFactory.reset();
 
 				AotTestAttributes aotAttributes = AotTestAttributes.getInstance();
 				assertThatExceptionOfType(UnsupportedOperationException.class)
@@ -126,11 +127,11 @@ class TestContextAotGeneratorTests extends AbstractAotTests {
 				assertThat(aotAttributes.getString("bogus")).isNull();
 				assertThat(aotAttributes.getBoolean("bogus")).isFalse();
 
-				TestAotMappings testAotMappings = new TestAotMappings();
+				AotTestContextInitializers aotContextInitializers = new AotTestContextInitializers();
 				for (Class<?> testClass : testClasses) {
 					MergedContextConfiguration mergedConfig = buildMergedContextConfiguration(testClass);
 					ApplicationContextInitializer<ConfigurableApplicationContext> contextInitializer =
-							testAotMappings.getContextInitializer(testClass);
+							aotContextInitializers.getContextInitializer(testClass);
 					assertThat(contextInitializer).isNotNull();
 					ApplicationContext context = ((AotContextLoader) mergedConfig.getContextLoader())
 							.loadContextForAotRuntime(mergedConfig, contextInitializer);
@@ -153,7 +154,7 @@ class TestContextAotGeneratorTests extends AbstractAotTests {
 	}
 
 	private static void assertRuntimeHints(RuntimeHints runtimeHints) {
-		assertReflectionRegistered(runtimeHints, TestAotMappings.GENERATED_MAPPINGS_CLASS_NAME, INVOKE_PUBLIC_METHODS);
+		assertReflectionRegistered(runtimeHints, AotTestContextInitializersCodeGenerator.GENERATED_MAPPINGS_CLASS_NAME, INVOKE_PUBLIC_METHODS);
 		assertReflectionRegistered(runtimeHints, AotTestAttributesCodeGenerator.GENERATED_ATTRIBUTES_CLASS_NAME, INVOKE_PUBLIC_METHODS);
 
 		Stream.of(
@@ -356,7 +357,7 @@ class TestContextAotGeneratorTests extends AbstractAotTests {
 
 	private static final String[] expectedSourceFiles = {
 			// Global
-			"org/springframework/test/context/aot/TestAotMappings__Generated.java",
+			"org/springframework/test/context/aot/AotTestContextInitializers__Generated.java",
 			"org/springframework/test/context/aot/AotTestAttributes__Generated.java",
 			// BasicSpringJupiterSharedConfigTests
 			"org/springframework/context/event/DefaultEventListenerFactory__TestContext001_BeanDefinitions.java",

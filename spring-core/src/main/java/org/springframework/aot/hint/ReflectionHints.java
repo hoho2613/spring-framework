@@ -20,12 +20,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.aot.hint.TypeHint.Builder;
@@ -133,6 +131,7 @@ public class ReflectionHints {
 	 */
 	public ReflectionHints registerTypeIfPresent(@Nullable ClassLoader classLoader,
 			String typeName, Consumer<TypeHint.Builder> typeHint) {
+
 		if (ClassUtils.isPresent(typeName, classLoader)) {
 			registerType(TypeReference.of(typeName), typeHint);
 		}
@@ -149,6 +148,7 @@ public class ReflectionHints {
 	 */
 	public ReflectionHints registerTypeIfPresent(@Nullable ClassLoader classLoader,
 			String typeName, MemberCategory... memberCategories) {
+
 		return registerTypeIfPresent(classLoader, typeName, TypeHint.builtWith(memberCategories));
 	}
 
@@ -177,18 +177,6 @@ public class ReflectionHints {
 
 	/**
 	 * Register the need for reflection on the specified {@link Constructor},
-	 * enabling {@link ExecutableMode#INVOKE}.
-	 * @param constructor the constructor that requires reflection
-	 * @return {@code this}, to facilitate method chaining
-	 * @deprecated in favor of {@link #registerConstructor(Constructor, ExecutableMode)}
-	 */
-	@Deprecated
-	public ReflectionHints registerConstructor(Constructor<?> constructor) {
-		return registerConstructor(constructor, ExecutableMode.INVOKE);
-	}
-
-	/**
-	 * Register the need for reflection on the specified {@link Constructor},
 	 * using the specified {@link ExecutableMode}.
 	 * @param constructor the constructor that requires reflection
 	 * @param mode the requested mode
@@ -197,33 +185,6 @@ public class ReflectionHints {
 	public ReflectionHints registerConstructor(Constructor<?> constructor, ExecutableMode mode) {
 		return registerType(TypeReference.of(constructor.getDeclaringClass()),
 				typeHint -> typeHint.withConstructor(mapParameters(constructor), mode));
-	}
-
-	/**
-	 * Register the need for reflection on the specified {@link Constructor}.
-	 * @param constructor the constructor that requires reflection
-	 * @param constructorHint a builder to further customize the hints of this
-	 * constructor
-	 * @return {@code this}, to facilitate method chaining`
-	 * @deprecated in favor of {@link #registerConstructor(Constructor, ExecutableMode)}
-	 */
-	@Deprecated
-	@SuppressWarnings("deprecation")
-	public ReflectionHints registerConstructor(Constructor<?> constructor, Consumer<ExecutableHint.Builder> constructorHint) {
-		return registerType(TypeReference.of(constructor.getDeclaringClass()),
-				typeHint -> typeHint.withConstructor(mapParameters(constructor), constructorHint));
-	}
-
-	/**
-	 * Register the need for reflection on the specified {@link Method},
-	 * enabling {@link ExecutableMode#INVOKE}.
-	 * @param method the method that requires reflection
-	 * @return {@code this}, to facilitate method chaining
-	 * @deprecated in favor of {@link #registerMethod(Method, ExecutableMode)}
-	 */
-	@Deprecated
-	public ReflectionHints registerMethod(Method method) {
-		return registerMethod(method, ExecutableMode.INVOKE);
 	}
 
 	/**
@@ -238,23 +199,8 @@ public class ReflectionHints {
 				typeHint -> typeHint.withMethod(method.getName(), mapParameters(method), mode));
 	}
 
-	/**
-	 * Register the need for reflection on the specified {@link Method}.
-	 * @param method the method that requires reflection
-	 * @param methodHint a builder to further customize the hints of this method
-	 * @return {@code this}, to facilitate method chaining
-	 * @deprecated in favor of {@link #registerMethod(Method, ExecutableMode)}
-	 */
-	@Deprecated
-	@SuppressWarnings("deprecation")
-	public ReflectionHints registerMethod(Method method, Consumer<ExecutableHint.Builder> methodHint) {
-		return registerType(TypeReference.of(method.getDeclaringClass()),
-				typeHint -> typeHint.withMethod(method.getName(), mapParameters(method), methodHint));
-	}
-
 	private List<TypeReference> mapParameters(Executable executable) {
-		return Arrays.stream(executable.getParameterTypes()).map(TypeReference::of)
-				.collect(Collectors.toList());
+		return TypeReference.listOf(executable.getParameterTypes());
 	}
 
 }
